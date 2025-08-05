@@ -24,6 +24,7 @@ import org.wso2.carbon.databridge.commons.ServerEventListener;
 import org.wso2.carbon.databridge.commons.binary.BinaryMessageConstants;
 import org.wso2.carbon.databridge.core.DataBridgeReceiverService;
 import org.wso2.carbon.databridge.core.exception.DataBridgeException;
+import org.wso2.carbon.databridge.receiver.binary.BinaryDataReceiverConstants;
 import org.wso2.carbon.databridge.receiver.binary.BinaryEventConverter;
 import org.wso2.carbon.databridge.receiver.binary.conf.BinaryDataReceiverConfiguration;
 import org.wso2.carbon.utils.Utils;
@@ -38,6 +39,7 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -382,6 +384,7 @@ public class BinaryDataReceiver implements ServerEventListener {
         @Override
         public void run() {
             try {
+                this.socket.setSoTimeout(binaryDataReceiverConfiguration.getSocketTimeout());
                 InputStream inputstream = new BufferedInputStream(socket.getInputStream());
                 OutputStream outputStream = new BufferedOutputStream((socket.getOutputStream()));
                 int messageType = inputstream.read();
@@ -391,8 +394,18 @@ public class BinaryDataReceiver implements ServerEventListener {
                     processMessage(messageType, message, outputStream);
                     messageType = inputstream.read();
                 }
+            } catch (SocketTimeoutException socketTimeoutException) {
+                log.error("Socket read timed out for client", socketTimeoutException);
             } catch (IOException ex) {
                 log.error("Error while reading from the socket. ", ex);
+            } finally {
+                if (socket != null && !socket.isClosed()) {
+                    try {
+                        socket.close();
+                    } catch (IOException ex) {
+                        log.error("Error while closing socket", ex);
+                    }
+                }
             }
         }
     }
