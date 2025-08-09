@@ -33,6 +33,7 @@ public class BinaryDataReceiverConfiguration {
     private String sslProtocols;
     private String ciphers;
     private String channelEncryptionProtocol;
+    private int socketTimeout;
 
     public BinaryDataReceiverConfiguration(int sslPort, int tcpPort) {
         this.sslPort = sslPort;
@@ -40,6 +41,7 @@ public class BinaryDataReceiverConfiguration {
         this.sizeOfSSLThreadPool = BinaryDataReceiverConstants.DEFAULT_SSL_RECEIVER_THREAD_POOL_SIZE;
         this.sizeOfTCPThreadPool = BinaryDataReceiverConstants.DEFAULT_TCP_RECEIVER_THREAD_POOL_SIZE;
         this.channelEncryptionProtocol = BinaryDataReceiverConstants.DEFAULT_CHANNEL_ENCRYPTION_PROTOCOL;
+        this.socketTimeout = BinaryDataReceiverConstants.DEFAULT_SOCKET_TIMEOUT;
     }
 
     public BinaryDataReceiverConfiguration(DataBridgeConfiguration dataBridgeConfiguration) {
@@ -50,6 +52,7 @@ public class BinaryDataReceiverConfiguration {
                 BinaryDataReceiverConstants.SSL_RECEIVER_PORT_CONFIG_NAME);
         String tcpPortConfiguration = dataReceiverConfiguration.getProperties().get(
                 BinaryDataReceiverConstants.TCP_RECEIVER_PORT_CONFIG_NAME);
+        String timeout = dataReceiverConfiguration.getProperties().get(BinaryDataReceiverConstants.SOCKET_TIMEOUT);
         String sslThreadPoolSize = dataReceiverConfiguration.getProperties().get(
                 BinaryDataReceiverConstants.SSL_RECEIVER_THREAD_POOL_SIZE);
         String tcpThreadPoolSize = dataReceiverConfiguration.getProperties().get(
@@ -66,6 +69,12 @@ public class BinaryDataReceiverConfiguration {
             this.sslPort = Integer.parseInt(sslPortConfiguration.trim()) + getPortOffset();
         } else {
             this.sslPort = BinaryDataReceiverConstants.DEFAULT_SSL_RECEIVER_PORT + getPortOffset();
+        }
+
+        if (timeout != null && !timeout.trim().isEmpty() && Integer.parseInt(timeout) > 0) {
+            this.socketTimeout = Integer.parseInt(timeout);
+        } else {
+            this.socketTimeout = BinaryDataReceiverConstants.DEFAULT_SOCKET_TIMEOUT;
         }
 
         if (tcpPortConfiguration != null && !tcpPortConfiguration.trim().isEmpty()) {
@@ -132,5 +141,9 @@ public class BinaryDataReceiverConfiguration {
 
     public String getChannelEncryptionProtocol() {
         return channelEncryptionProtocol;
+    }
+
+    public int getSocketTimeout() {
+        return socketTimeout;
     }
 }
